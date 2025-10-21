@@ -37,6 +37,19 @@ app.use(express.static("public"));
   await createTableEval();
 })();
 
+app.get('/', (req, res) => {
+  res.send('<h1>Hi</h1>');
+});
+
+const teamRouter = require('./routes/team');
+const playerRouter = require('./routes/player');
+const coachRouter = require('./routes/coach');
+const astRouter = require('./routes/ast');
+
+app.use('/teams',teamRouter);
+app.use('/players',playerRouter);
+app.use('/coaches',coachRouter);
+app.use('/allstarteam',astRouter);
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`🚀 Server running on http://localhost:${PORT}`));
