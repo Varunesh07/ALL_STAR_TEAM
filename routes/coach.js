@@ -1,8 +1,8 @@
 const express = require('express');
 
 const router = express.Router();
-const {getAllCoaches,getCoach} = require("../controllers/coach");
+const {getAllCoaches,getCoach,insertSingleCoach,deleteCoach} = require("../controllers/coach");
 
-router.route('/').get(getAllCoaches);
-router.route('/:id').get(getCoach);
+router.route('/').get(getAllCoaches).post(insertSingleCoach);
+router.route('/:id').get(getCoach).delete(deleteCoach);
 module.exports = router;
