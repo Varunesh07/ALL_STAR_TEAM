@@ -1,7 +1,12 @@
 const express = require('express');
 
 const router = express.Router();
-const {getAllTeams,getTeam,getPointsTable,insertSingleTeam,deleteTeam, updateTeam} = require("../controllers/team");
+const {getAllTeams,
+       getTeam,
+       getPointsTable,
+       insertSingleTeam,
+       deleteTeam, 
+       updateTeam} = require("../controllers/team");
 
 router.route('/').get(getAllTeams).post(insertSingleTeam);
 router.route('/pointsTable').get(getPointsTable);

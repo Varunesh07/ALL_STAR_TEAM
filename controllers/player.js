@@ -240,16 +240,16 @@ const deletePlayer = async (req, res) => {
     }
 };
 
-const updateplayer = async (req, res) => {
+const updatePlayer = async (req, res) => {
     try {
         const { id } = req.params;
         const newData = req.body;
 
-        // Validate playerID
+        // Validate PID
         if (isNaN(id) || id < 1) {
             return res.status(400).json({
                 status: 'error',
-                message: 'Invalid playerID: Must be a positive number'
+                message: 'Invalid PID: Must be a positive number'
             });
         }
 
@@ -262,64 +262,124 @@ const updateplayer = async (req, res) => {
         }
 
         // Fetch existing player
-        const checkQuery = `SELECT pID, playerName, MatchesWon, MatchesLost, Champions, NRR FROM player WHERE playerID = ?`;
+        const checkQuery = `
+            SELECT PID, PName, TEAMID, DOB, isSelected, Role,
+                   RunsScored, WicketsTaken, BallsFaced, RunsGiven,
+                   HighestScore, BestBowlingFigure
+            FROM player
+            WHERE PID = ?
+        `;
         const [players] = await db.query(checkQuery, [id]);
 
         if (players.length === 0) {
             return res.status(404).json({
                 status: 'error',
-                message: `player with playerID ${id} not found`
+                message: `Player with PID ${id} not found`
             });
         }
 
-        const existingplayer = players[0];
+        const existingPlayer = players[0];
 
         // Compare and collect fields to update
         const fieldsToUpdate = {};
-        if (newData.playerName && newData.playerName.trim() !== existingplayer.playerName) {
-            if (typeof newData.playerName !== 'string' || newData.playerName.trim().length === 0) {
+        if (newData.PName && newData.PName.trim() !== existingPlayer.PName) {
+            if (typeof newData.PName !== 'string' || newData.PName.trim().length === 0) {
                 return res.status(400).json({
                     status: 'error',
-                    message: 'Invalid playerName: Must be a non-empty string'
+                    message: 'Invalid PName: Must be a non-empty string'
                 });
             }
-            fieldsToUpdate.playerName = newData.playerName.trim();
+            fieldsToUpdate.PName = newData.PName.trim();
         }
-        if (newData.MatchesWon !== undefined && newData.MatchesWon !== existingplayer.MatchesWon) {
-            if (!Number.isInteger(newData.MatchesWon) || newData.MatchesWon < 0) {
+        if (newData.TEAMID !== undefined && newData.TEAMID !== existingPlayer.TEAMID) {
+            if (newData.TEAMID !== null && (isNaN(newData.TEAMID) || newData.TEAMID < 1)) {
                 return res.status(400).json({
                     status: 'error',
-                    message: 'Invalid MatchesWon: Must be a non-negative integer'
+                    message: 'Invalid TEAMID: Must be a positive number or null'
                 });
             }
-            fieldsToUpdate.MatchesWon = newData.MatchesWon;
+            fieldsToUpdate.TEAMID = newData.TEAMID;
         }
-        if (newData.MatchesLost !== undefined && newData.MatchesLost !== existingplayer.MatchesLost) {
-            if (!Number.isInteger(newData.MatchesLost) || newData.MatchesLost < 0) {
+        if (newData.DOB && newData.DOB !== existingPlayer.DOB) {
+            if (!/^\d{4}-\d{2}-\d{2}$/.test(newData.DOB)) {
                 return res.status(400).json({
                     status: 'error',
-                    message: 'Invalid MatchesLost: Must be a non-negative integer'
+                    message: 'Invalid DOB format: Must be YYYY-MM-DD'
                 });
             }
-            fieldsToUpdate.MatchesLost = newData.MatchesLost;
+            fieldsToUpdate.DOB = newData.DOB;
         }
-        if (newData.Champions !== undefined && newData.Champions !== existingplayer.Champions) {
-            if (!Number.isInteger(newData.Champions) || newData.Champions < 0) {
+        if (newData.isSelected !== undefined && newData.isSelected !== existingPlayer.isSelected) {
+            if (![0, 1].includes(newData.isSelected)) {
                 return res.status(400).json({
                     status: 'error',
-                    message: 'Invalid Champions: Must be a non-negative integer'
+                    message: 'Invalid isSelected: Must be 0 or 1'
                 });
             }
-            fieldsToUpdate.Champions = newData.Champions;
+            fieldsToUpdate.isSelected = newData.isSelected;
         }
-        if (newData.NRR !== undefined && newData.NRR !== existingplayer.NRR) {
-            if (isNaN(newData.NRR) || newData.NRR < -9.99 || newData.NRR > 9.99) {
+        if (newData.Role && newData.Role !== existingPlayer.Role) {
+            if (!['Batsman', 'Bowler', 'Allrounder', 'Wicketkeeper'].includes(newData.Role)) {
                 return res.status(400).json({
                     status: 'error',
-                    message: 'Invalid NRR: Must be a number between -9.99 and 9.99'
+                    message: 'Invalid Role: Must be Batsman, Bowler, Allrounder, or Wicketkeeper'
                 });
             }
-            fieldsToUpdate.NRR = parseFloat(newData.NRR.toFixed(2));
+            fieldsToUpdate.Role = newData.Role;
+        }
+        if (newData.RunsScored !== undefined && newData.RunsScored !== existingPlayer.RunsScored) {
+            if (!Number.isInteger(newData.RunsScored) || newData.RunsScored < 0) {
+                return res.status(400).json({
+                    status: 'error',
+                    message: 'Invalid RunsScored: Must be a non-negative integer'
+                });
+            }
+            fieldsToUpdate.RunsScored = newData.RunsScored;
+        }
+        if (newData.WicketsTaken !== undefined && newData.WicketsTaken !== existingPlayer.WicketsTaken) {
+            if (!Number.isInteger(newData.WicketsTaken) || newData.WicketsTaken < 0) {
+                return res.status(400).json({
+                    status: 'error',
+                    message: 'Invalid WicketsTaken: Must be a non-negative integer'
+                });
+            }
+            fieldsToUpdate.WicketsTaken = newData.WicketsTaken;
+        }
+        if (newData.BallsFaced !== undefined && newData.BallsFaced !== existingPlayer.BallsFaced) {
+            if (!Number.isInteger(newData.BallsFaced) || newData.BallsFaced < 0) {
+                return res.status(400).json({
+                    status: 'error',
+                    message: 'Invalid BallsFaced: Must be a non-negative integer'
+                });
+            }
+            fieldsToUpdate.BallsFaced = newData.BallsFaced;
+        }
+        if (newData.RunsGiven !== undefined && newData.RunsGiven !== existingPlayer.RunsGiven) {
+            if (!Number.isInteger(newData.RunsGiven) || newData.RunsGiven < 0) {
+                return res.status(400).json({
+                    status: 'error',
+                    message: 'Invalid RunsGiven: Must be a non-negative integer'
+                });
+            }
+            fieldsToUpdate.RunsGiven = newData.RunsGiven;
+        }
+        if (newData.HighestScore !== undefined && newData.HighestScore !== existingPlayer.HighestScore) {
+            if (!Number.isInteger(newData.HighestScore) || newData.HighestScore < 0) {
+                return res.status(400).json({
+                    status: 'error',
+                    message: 'Invalid HighestScore: Must be a non-negative integer'
+                });
+            }
+            fieldsToUpdate.HighestScore = newData.HighestScore;
+        }
+        if (newData.BestBowlingFigure !== undefined && newData.BestBowlingFigure !== existingPlayer.BestBowlingFigure) {
+            if (newData.BestBowlingFigure !== null && !/^\d+\/\d+$/.test(newData.BestBowlingFigure)) {
+                return res.status(400).json({
+                    status: 'error',
+                    message: 'Invalid BestBowlingFigure format: Must be W/R (e.g., 3/25) or null'
+                });
+            }
+            fieldsToUpdate.BestBowlingFigure = newData.BestBowlingFigure;
         }
 
         // If no fields to update, return early
@@ -327,7 +387,7 @@ const updateplayer = async (req, res) => {
             return res.status(200).json({
                 status: 'success',
                 message: 'No changes detected',
-                data: existingplayer
+                data: existingPlayer
             });
         }
 
@@ -336,7 +396,7 @@ const updateplayer = async (req, res) => {
             .map(field => `${field} = ?`)
             .join(', ');
         const values = [...Object.values(fieldsToUpdate), id];
-        const updateQuery = `UPDATE player SET ${setClause} WHERE playerID = ?`;
+        const updateQuery = `UPDATE player SET ${setClause} WHERE PID = ?`;
 
         // Execute update
         const [result] = await db.query(updateQuery, values);
@@ -350,15 +410,22 @@ const updateplayer = async (req, res) => {
 
         res.json({
             status: 'success',
-            message: `player with playerID ${id} updated successfully`,
-            data: { playerID: parseInt(id), ...fieldsToUpdate }
+            message: `Player with PID ${id} updated successfully`,
+            data: { PID: parseInt(id), ...fieldsToUpdate }
         });
     } catch (error) {
         console.error('Error updating player:', error);
-        if (error.code === 'ER_DUP_ENTRY') {
-            return res.status(409).json({
+        if (error.code === 'ER_NO_REFERENCED_ROW_2') {
+            return res.status(400).json({
                 status: 'error',
-                message: 'playerName already exists',
+                message: 'Invalid TEAMID: Team does not exist',
+                error: error.message
+            });
+        }
+        if (error.code === 'ER_CHECK_CONSTRAINT_VIOLATED') {
+            return res.status(400).json({
+                status: 'error',
+                message: 'Check constraint violated (e.g., invalid Role or negative value)',
                 error: error.message
             });
         }
@@ -370,5 +437,11 @@ const updateplayer = async (req, res) => {
     }
 };
 
-
-module.exports = {getAllPlayers,getPlayer,orangeCap,purpleCap,insertSinglePlayer,deletePlayer};
+module.exports = {getAllPlayers,
+                  getPlayer,
+                  orangeCap,
+                  purpleCap,
+                  insertSinglePlayer,
+                  deletePlayer,
+                  updatePlayer
+                };

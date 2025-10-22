@@ -183,5 +183,159 @@ const deleteCoach = async (req, res) => {
     }
 };
 
+const updateCoach = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const newData = req.body;
 
-module.exports = {getAllCoaches,getCoach,insertSingleCoach,deleteCoach};
+        // Validate CoachID
+        if (isNaN(id) || id < 1) {
+            return res.status(400).json({
+                status: 'error',
+                message: 'Invalid CoachID: Must be a positive number'
+            });
+        }
+
+        // Validate input
+        if (!newData || typeof newData !== 'object') {
+            return res.status(400).json({
+                status: 'error',
+                message: 'Invalid input: Expected a coach object'
+            });
+        }
+
+        // Fetch existing coach
+        const checkQuery = `
+            SELECT CoachID, CoachName, TeamID, Role, ChampionshipsWon, WinPercentage, Experience
+            FROM Coach
+            WHERE CoachID = ?
+        `;
+        const [coaches] = await db.query(checkQuery, [id]);
+
+        if (coaches.length === 0) {
+            return res.status(404).json({
+                status: 'error',
+                message: `Coach with CoachID ${id} not found`
+            });
+        }
+
+        const existingCoach = coaches[0];
+
+        // Compare and collect fields to update
+        const fieldsToUpdate = {};
+        if (newData.CoachName && newData.CoachName.trim() !== existingCoach.CoachName) {
+            if (typeof newData.CoachName !== 'string' || newData.CoachName.trim().length === 0) {
+                return res.status(400).json({
+                    status: 'error',
+                    message: 'Invalid CoachName: Must be a non-empty string'
+                });
+            }
+            fieldsToUpdate.CoachName = newData.CoachName.trim();
+        }
+        if (newData.TeamID !== undefined && newData.TeamID !== existingCoach.TeamID) {
+            if (newData.TeamID !== null && (isNaN(newData.TeamID) || newData.TeamID < 1)) {
+                return res.status(400).json({
+                    status: 'error',
+                    message: 'Invalid TeamID: Must be a positive number or null'
+                });
+            }
+            fieldsToUpdate.TeamID = newData.TeamID;
+        }
+        if (newData.Role && newData.Role !== existingCoach.Role) {
+            if (!['Head', 'Assistant'].includes(newData.Role)) {
+                return res.status(400).json({
+                    status: 'error',
+                    message: 'Invalid Role: Must be Head or Assistant'
+                });
+            }
+            fieldsToUpdate.Role = newData.Role;
+        }
+        if (newData.ChampionshipsWon !== undefined && newData.ChampionshipsWon !== existingCoach.ChampionshipsWon) {
+            if (!Number.isInteger(newData.ChampionshipsWon) || newData.ChampionshipsWon < 0) {
+                return res.status(400).json({
+                    status: 'error',
+                    message: 'Invalid ChampionshipsWon: Must be a non-negative integer'
+                });
+            }
+            fieldsToUpdate.ChampionshipsWon = newData.ChampionshipsWon;
+        }
+        if (newData.WinPercentage !== undefined && newData.WinPercentage !== existingCoach.WinPercentage) {
+            if (newData.WinPercentage !== null && (isNaN(newData.WinPercentage) || newData.WinPercentage < 0 || newData.WinPercentage > 100)) {
+                return res.status(400).json({
+                    status: 'error',
+                    message: 'Invalid WinPercentage: Must be a number between 0 and 100 or null'
+                });
+            }
+            fieldsToUpdate.WinPercentage = newData.WinPercentage === null ? null : parseFloat(newData.WinPercentage.toFixed(2));
+        }
+        if (newData.Experience !== undefined && newData.Experience !== existingCoach.Experience) {
+            if (newData.Experience !== null && (!Number.isInteger(newData.Experience) || newData.Experience < 0)) {
+                return res.status(400).json({
+                    status: 'error',
+                    message: 'Invalid Experience: Must be a non-negative integer or null'
+                });
+            }
+            fieldsToUpdate.Experience = newData.Experience;
+        }
+
+        // If no fields to update, return early
+        if (Object.keys(fieldsToUpdate).length === 0) {
+            return res.status(200).json({
+                status: 'success',
+                message: 'No changes detected',
+                data: existingCoach
+            });
+        }
+
+        // Build dynamic UPDATE query
+        const setClause = Object.keys(fieldsToUpdate)
+            .map(field => `${field} = ?`)
+            .join(', ');
+        const values = [...Object.values(fieldsToUpdate), id];
+        const updateQuery = `UPDATE Coach SET ${setClause} WHERE CoachID = ?`;
+
+        // Execute update
+        const [result] = await db.query(updateQuery, values);
+
+        if (result.affectedRows === 0) {
+            return res.status(500).json({
+                status: 'error',
+                message: 'Failed to update coach'
+            });
+        }
+
+        res.json({
+            status: 'success',
+            message: `Coach with CoachID ${id} updated successfully`,
+            data: { CoachID: parseInt(id), ...fieldsToUpdate }
+        });
+    } catch (error) {
+        console.error('Error updating coach:', error);
+        if (error.code === 'ER_NO_REFERENCED_ROW_2') {
+            return res.status(400).json({
+                status: 'error',
+                message: 'Invalid TeamID: Team does not exist',
+                error: error.message
+            });
+        }
+        if (error.code === 'ER_CHECK_CONSTRAINT_VIOLATED') {
+            return res.status(400).json({
+                status: 'error',
+                message: 'Check constraint violated (e.g., invalid Role or WinPercentage)',
+                error: error.message
+            });
+        }
+        res.status(500).json({
+            status: 'error',
+            message: 'Failed to update coach',
+            error: error.message
+        });
+    }
+};
+
+module.exports = {getAllCoaches,
+                  getCoach,
+                  insertSingleCoach,
+                  deleteCoach,
+                  updateCoach
+                };
