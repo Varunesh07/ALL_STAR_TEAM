@@ -1,5 +1,8 @@
 const db = require('../config/db')
 
+
+
+
 async function createMatchLog(){
     try {
         const createQuery = `
@@ -206,7 +209,7 @@ async function createMatchLog(){
     (10, 9, 'Narendra Modi Stadium, Ahmedabad', '2025-04-20', '195-4', '180-7', 100); -- Gujarat wins, Shubman Gill
         `;
     await db.execute(insertQuery);
-    console.log('✅ Default match log data inserted successfully!');
+    console.log('Default match log data inserted successfully!');
     }else{
         console.log('Datas of matches are already present!!');
     }

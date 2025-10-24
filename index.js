@@ -45,11 +45,26 @@ const teamRouter = require('./routes/team');
 const playerRouter = require('./routes/player');
 const coachRouter = require('./routes/coach');
 const astRouter = require('./routes/ast');
+const matchLogRouter = require('./routes/matchlog');
 
 app.use('/teams',teamRouter);
 app.use('/players',playerRouter);
 app.use('/coaches',coachRouter);
 app.use('/allstarteam',astRouter);
+app.use('/matchlogs',matchLogRouter);
+
+
+const { createMatchLogTrigger } = require('./controllers/setup');
+
+// Create trigger on startup
+(async () => {
+    try {
+        await createMatchLogTrigger({ body: {} }, { status: () => ({ json: console.log }) });
+        console.log('Trigger created successfully');
+    } catch (error) {
+        console.error('Failed to create trigger on startup:', error);
+    }
+})();
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`🚀 Server running on http://localhost:${PORT}`));
