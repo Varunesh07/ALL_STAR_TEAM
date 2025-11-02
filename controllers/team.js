@@ -22,7 +22,7 @@ const getTeam = async (req, res) => {
   if (!id || isNaN(id)) {
     return res.status(400).json({ success: false, error: "Valid numeric id required" });
   }
-
+  console.log('The team id is ',id);
   try {
     // TEAM INFO
     const [teamRows] = await db.execute(`SELECT * FROM TEAM WHERE TeamID = ?`, [id]);

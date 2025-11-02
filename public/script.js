@@ -78,7 +78,7 @@ function showHome() {
             })()}
           ` : `<p class="text-muted"><strong>Not played</strong></p>`}
 
-          <button class="btn btn-sm btn-primary" onclick="showMatchDetail(${m.MATCHID})">View Details</button>
+          <button class="btn btn-sm btn-primary" onclick="showMatchDetail(${m.MatchID})">View Details</button>
         </div>
       </div>
     </div>`;
@@ -272,6 +272,8 @@ function showTeamDetail(teamId) {
 
 // SHOW MATCH DETAIL - FIXED (NO ERROR)
 function showMatchDetail(matchId) {
+  
+  
   fetch(`/matches/${matchId}`)
     .then(res => {
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -281,7 +283,7 @@ function showMatchDetail(matchId) {
       if (!data.success) throw new Error(data.error || "Match not found");
       if (!data.data || data.data.length === 0) throw new Error("Match data missing");
 
-      const m = data.data[0];  // FIXED: was data.data.match
+      const m = data.data.match;  // FIXED: was data.data.match
       const teams = Object.fromEntries(data.data.teams?.map(t => [t.TEAMID, t.TEAMNAME]) || []);
 
       const t1 = teams[m.Team1ID] || 'Unknown';

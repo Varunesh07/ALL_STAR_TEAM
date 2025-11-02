@@ -27,7 +27,8 @@ const getMatch = async (req, res) => {
   if (!id || isNaN(id)) {
     return res.status(400).json({ success: false, error: "Valid numeric id required" });
   }
-
+  console.log('The match id is ',id);
+  
   try {
     const [matchRows] = await db.execute(`SELECT * FROM MATCHLOG WHERE MATCHID = ?`, [id]);
     if (matchRows.length === 0) {
