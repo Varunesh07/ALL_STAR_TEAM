@@ -30,7 +30,7 @@ const getMatch = async (req, res) => {
   console.log('The match id is ',id);
   
   try {
-    const [matchRows] = await db.execute(`SELECT * FROM MATCHLOG WHERE MATCHID = ?`, [id]);
+    const [matchRows] = await db.execute(`SELECT M.*,P.PName FROM MATCHLOG M NATURAL JOIN PLAYER P WHERE MATCHID = ? AND PLAYERID = PID;`, [id]);
     if (matchRows.length === 0) {
       return res.status(404).json({ success: false, error: "Match not found" });
     }
@@ -40,6 +40,8 @@ const getMatch = async (req, res) => {
       `SELECT TEAMID, TEAMNAME FROM TEAM WHERE TEAMID IN (?, ?)`,
       [m.Team1ID, m.Team2ID]
     );
+
+    
 
     res.json({
       success: true,
@@ -53,6 +55,7 @@ const getMatch = async (req, res) => {
       res.status(500).json({ success: false, error: error.message });
   }
 };
+
 const addMatchLog = async (req, res) => {
   try {
     const { Team1ID, Team2ID, Venue, MatchDate, Team1Score, Team2Score, PlayerID } = req.body;
