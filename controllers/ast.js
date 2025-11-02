@@ -1,3 +1,4 @@
+// controllers/ast.js
 const db = require('../config/db');
 
 async function selectAllStarTeam(req, res) {
@@ -84,20 +85,22 @@ async function selectAllStarTeam(req, res) {
             isCaptain: captain && player.PID === captain.PID
         }));
 
-        // Prepare JSON response
+        // DEBUG: See exactly what is sent
+        console.log("All-Star team sent to frontend:", teamWithCaptain);
+
+        // FINAL RESPONSE — CONSISTENT WITH OTHER ROUTES
         res.json({
-            status: 'success',
+            success: true,
             data: {
                 allStarTeam: teamWithCaptain,
                 teamComposition: selectedRoles
-            },
-            message: 'All-Star team selected successfully'
+            }
         });
 
     } catch (error) {
         console.error('Error selecting All-Star team:', error);
         res.status(500).json({
-            status: 'error',
+            success: false,
             message: 'Failed to select All-Star team',
             error: error.message
         });

@@ -1,70 +1,81 @@
+// index.js
 require("dotenv").config();
 const express = require("express");
+const cors = require("cors");
 
+// === MODELS ===
 const { createTableTeam } = require("./models/teamModel");
 const { createPlayerTable } = require("./models/playerModel");
-const { createTableCoach } = require('./models/coachModel');
-const { createMatchLog } = require('./models/matchLogModel');
-const { createTableEval } = require('./models/evalModel');
-const { createTableAdmin } = require('./models/adminModel')
+const { createTableCoach } = require("./models/coachModel");
+const { createMatchLog } = require("./models/matchLogModel");
+const { createTableEval } = require("./models/evalModel");
+const { createTableAdmin } = require("./models/adminModel");
 
+// === ROUTERS ===
+const teamRouter = require("./routes/team");
+const playerRouter = require("./routes/player");
+const coachRouter = require("./routes/coach");
+const astRouter = require("./routes/ast");
+const matchLogRouter = require("./routes/matchlog");
+
+// === TRIGGER ===
+const { createMatchLogTrigger } = require("./controllers/setup");
+
+// === EXPRESS APP ===
 const app = express();
+
+// Middleware
+app.use(cors());
 app.use(express.json());
 app.use(express.static("public"));
 
-(async () => {
-  await createTableAdmin();
-})();
+// === API ROUTES ===
+app.use("/teams", teamRouter);
+app.use("/players", playerRouter);
+app.use("/coaches", coachRouter);
+app.use("/allstarteam", astRouter);
+app.use("/matches", matchLogRouter); // MATCHES
 
+// === REDIRECTS ===
+app.get('/allstar', (req, res) => res.redirect('/allstarteam'));
 
-(async () => {
-  await createTableTeam();
-})();
-
-(async () => {
-  await createPlayerTable();
-})();
-
-(async () => {
-  await createTableCoach();
-})();
-
-(async () => {
-  await createMatchLog();
-})();
-
-(async () => {
-  await createTableEval();
-})();
-
-app.get('/', (req, res) => {
-  res.send('<h1>Hi</h1>');
+// === SPA FALLBACK ===
+// SPA FALLBACK — MUST BE LAST
+app.use((req, res, next) => {
+  if (!req.path.startsWith('/api') && !req.path.includes('.')) {
+    res.sendFile(__dirname + '/public/index.html');
+  } else {
+    next();
+  }
 });
 
-const teamRouter = require('./routes/team');
-const playerRouter = require('./routes/player');
-const coachRouter = require('./routes/coach');
-const astRouter = require('./routes/ast');
-const matchLogRouter = require('./routes/matchlog');
-
-app.use('/teams',teamRouter);
-app.use('/players',playerRouter);
-app.use('/coaches',coachRouter);
-app.use('/allstarteam',astRouter);
-app.use('/matchlogs',matchLogRouter);
-
-
-const { createMatchLogTrigger } = require('./controllers/setup');
-
-// Create trigger on startup
+// === DATABASE & TRIGGERS ===
 (async () => {
-    try {
-        await createMatchLogTrigger({ body: {} }, { status: () => ({ json: console.log }) });
-        console.log('Trigger created successfully');
-    } catch (error) {
-        console.error('Failed to create trigger on startup:', error);
-    }
+  try {
+    console.log("Creating tables...");
+    await createTableAdmin();
+    await createTableTeam();
+    await createPlayerTable();
+    await createTableCoach();
+    await createMatchLog();
+    await createTableEval();
+    console.log("All tables created!");
+  } catch (err) {
+    console.error("Table creation failed:", err);
+  }
 })();
 
+(async () => {
+  try {
+    await createMatchLogTrigger({ body: {} }, { status: () => ({ json: () => {} }) });
+    console.log("MatchLog trigger created");
+  } catch (error) {
+    console.error("Trigger failed:", error);
+  }
+})();
+
+// === START SERVER ===
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`🚀 Server running on http://localhost:${PORT}`));
+app.listen(PORT, () => {
+  console.log(`Server running on http://localhost:${PORT}`);
+});
