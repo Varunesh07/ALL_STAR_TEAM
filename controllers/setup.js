@@ -21,20 +21,20 @@ const createMatchLogTrigger = async (req, res) => {
                 IF team1_runs > team2_runs THEN
                     UPDATE Team 
                     SET MatchesWon = MatchesWon + 1,
-                        NRR = LEAST(GREATEST(NRR + 0.2, -99.99), 99.99)
+                        NRR = NRR + 0.2
                     WHERE TeamID = NEW.Team1ID;
                     UPDATE Team 
                     SET MatchesLost = MatchesLost + 1,
-                        NRR = LEAST(GREATEST(NRR - 0.2, -99.99), 99.99)
+                        NRR = NRR - 0.2
                     WHERE TeamID = NEW.Team2ID;
                 ELSEIF team2_runs > team1_runs THEN
                     UPDATE Team 
                     SET MatchesWon = MatchesWon + 1,
-                        NRR = LEAST(GREATEST(NRR + 0.2, -99.99), 99.99)
+                        NRR = NRR + 0.2
                     WHERE TeamID = NEW.Team2ID;
                     UPDATE Team 
                     SET MatchesLost = MatchesLost + 1,
-                        NRR = LEAST(GREATEST(NRR - 0.2, -99.99), 99.99)
+                        NRR = NRR - 0.2
                     WHERE TeamID = NEW.Team1ID;
                 END IF;
             END
@@ -64,4 +64,49 @@ const createMatchLogTrigger = async (req, res) => {
     }
 };
 
-module.exports = { createMatchLogTrigger };
+const createDeleteTrigger = async (req, res) => {
+  try {
+    await db.query('DROP TRIGGER IF EXISTS after_matchlog_delete');
+
+    const sql = `
+      CREATE TRIGGER after_matchlog_delete
+      AFTER DELETE ON MatchLog
+      FOR EACH ROW
+      BEGIN
+          DECLARE team1_runs INT;
+          DECLARE team2_runs INT;
+
+          SET team1_runs = CAST(SUBSTRING_INDEX(OLD.Team1Score, '-', 1) AS UNSIGNED);
+          SET team2_runs = CAST(SUBSTRING_INDEX(OLD.Team2Score, '-', 1) AS UNSIGNED);
+
+          IF team1_runs > team2_runs THEN
+              UPDATE Team 
+              SET MatchesWon = GREATEST(MatchesWon - 1, 0),
+                  NRR = NRR - 0.2
+              WHERE TeamID = OLD.Team1ID;
+              UPDATE Team 
+              SET MatchesLost = GREATEST(MatchesLost - 1, 0),
+                  NRR = NRR + 0.2
+              WHERE TeamID = OLD.Team2ID;
+          ELSEIF team2_runs > team1_runs THEN
+              UPDATE Team 
+              SET MatchesWon = GREATEST(MatchesWon - 1, 0),
+                  NRR = NRR - 0.2
+              WHERE TeamID = OLD.Team2ID;
+              UPDATE Team 
+              SET MatchesLost = GREATEST(MatchesLost - 1, 0),
+                  NRR = NRR + 0.2
+              WHERE TeamID = OLD.Team1ID;
+          END IF;
+      END
+    `;
+
+    await db.query(sql);
+    res.status(201).json({ status: 'success', message: 'DELETE trigger created' });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ status: 'error', message: e.message });
+  }
+};
+
+module.exports = { createMatchLogTrigger , createDeleteTrigger};
