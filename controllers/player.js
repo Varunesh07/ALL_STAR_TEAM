@@ -49,9 +49,19 @@ const getPlayer = async (req, res) => {
       return res.status(404).json({ success: false, error: "Player not found" });
     }
 
+    const [teamRows] = await db.execute(`
+      SELECT 
+        TEAMID , TEAMNAME
+      FROM TEAM 
+    `);
+
+    if (teamRows.length === 0) {
+      return res.status(404).json({ success: false, error: "Team not found" });
+    }
+
     res.json({
       success: true,
-      data: { player: playerRows }
+      data: { player: playerRows, teams: teamRows }
     });
   } catch (error) {
     console.error("DB Error (player by id):", error);
@@ -272,7 +282,8 @@ const updatePlayer = async (req, res) => {
         message: 'Invalid PID: Must be a positive number'
       });
     }
-
+    console.log('Entered edit with player id ' , id);
+    
     if (!newData || typeof newData !== 'object') {
       return res.status(400).json({
         status: 'error',
@@ -283,8 +294,8 @@ const updatePlayer = async (req, res) => {
     const checkQuery = `
       SELECT PID, PName, TEAMID, DOB, isSelected, Role,
              RunsScored, WicketsTaken, BallsFaced, RunsGiven,
-             HighestScore, BestBowlingFigure
-      FROM player WHERE PID = ?
+             HighestScore, BestBowlingFigure 
+      FROM player   WHERE PID = ?
     `;
     const [players] = await db.query(checkQuery, [id]);
 

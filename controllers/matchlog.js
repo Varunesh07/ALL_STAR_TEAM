@@ -116,4 +116,21 @@ const addMatchLog = async (req, res) => {
   }
 };
 
-module.exports = { addMatchLog, getAllMatches, getMatch };
+// controllers/matchlog.js  (add this function)
+const deleteMatch = async (req, res) => {
+  const { id } = req.params;
+  try {
+    const [result] = await db.query('DELETE FROM MatchLog WHERE MatchID = ?', [id]);
+    if (result.affectedRows === 0)
+      return res.status(404).json({ status: 'error', message: 'Match not found' });
+
+    res.json({ status: 'success', message: 'Match deleted – stats rolled back' });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ status: 'error', message: e.message });
+  }
+};
+
+
+
+module.exports = { addMatchLog, getAllMatches, getMatch , deleteMatch };

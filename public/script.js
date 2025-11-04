@@ -79,6 +79,7 @@ function showHome() {
           ` : `<p class="text-muted"><strong>Not played</strong></p>`}
 
           <button class="btn btn-sm btn-primary" onclick="showMatchDetail(${m.MatchID})">View Details</button>
+          <button class="btn btn-sm btn-danger" onclick="deleteMatch(${m.MatchID})">Delete</button>
         </div>
       </div>
     </div>`;
@@ -837,6 +838,28 @@ async function deletePlayer(id) {
     showPlayers();
   } else {
     alert("Error: " + result.message);
+  }
+}
+
+async function deleteMatch(matchId) {
+  if (!confirm('Are you sure you want to delete this match?\nAll stats will be rolled back automatically.')) return;
+
+  try {
+    const res = await fetch(`/matches/${matchId}`, {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' }
+    });
+    const data = await res.json();
+
+    if (data.success) {
+      alert('Match deleted – stats updated!');
+      showHome();                 // refresh the home page (recent matches)
+    } else {
+      alert('Error: ' + (data.error || data.message));
+    }
+  } catch (err) {
+    console.error('Delete error:', err);
+    alert('Network error – try again.');
   }
 }
 

@@ -19,7 +19,7 @@ const astRouter = require("./routes/ast");
 const matchLogRouter = require("./routes/matchlog");
 
 // === TRIGGER ===
-const { createMatchLogTrigger } = require("./controllers/setup");
+const { createMatchLogTrigger , createDeleteTrigger } = require("./controllers/setup");
 
 // === EXPRESS APP ===
 const app = express();
@@ -68,6 +68,7 @@ app.use((req, res, next) => {
 (async () => {
   try {
     await createMatchLogTrigger({ body: {} }, { status: () => ({ json: () => {} }) });
+    await createDeleteTrigger({ body: {} }, { status: () => ({ json: () => {} }) });
     console.log("MatchLog trigger created");
   } catch (error) {
     console.error("Trigger failed:", error);
