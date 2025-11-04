@@ -21,7 +21,7 @@ It also visualizes the tournament’s **Points Table**, tracks the **Orange Cap*
 - **Coaches** – assign evaluations and feedback to players  
 - **Match Logs** – match outcomes, integrated with team statistics  
 - **Evaluations** – performance ratings from coaches  
-- **Points Table** – shows each team’s current standing based on wins/losses  
+- **Points Table** –automatically detected based on no.of.wins and NRR  
 - **Orange Cap & Purple Cap** – automatically determined based on top performers
 
 ---
@@ -33,6 +33,7 @@ It also visualizes the tournament’s **Points Table**, tracks the **Orange Cap*
 | Database | MySQL (using `mysql2` package) |
 | Frontend | HTML, CSS |
 | Environment Management | dotenv |
+| API Testing | Postman |
 
 ---
 
@@ -93,8 +94,7 @@ It also visualizes the tournament’s **Points Table**, tracks the **Orange Cap*
 ## 💾 Database Setup
 This project uses **MySQL** with the `mysql2` package.  
 - Make sure a MySQL server is running locally.  
-- Create the required tables before running the app.  
-- Use provided SQL scripts or schema to set up database structure.  
+- Just create a Database alone in MYSQL server and tables will be automatically generated
 - **Triggers** are used to automatically update the win/loss count of teams upon match record changes.
 
 ---
