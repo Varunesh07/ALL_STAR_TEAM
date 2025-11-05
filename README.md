@@ -34,7 +34,7 @@ It also visualizes the tournament’s **Points Table**, tracks the **Orange Cap*
 | Frontend | HTML, CSS |
 | Environment Management | dotenv |
 | API Testing | Postman |
-
+| Development Tools | Nodemon |
 ---
 
 ## 🧾 Current Features
