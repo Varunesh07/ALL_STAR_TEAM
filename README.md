@@ -121,7 +121,7 @@ This project uses **MySQL** with the `mysql2` package.
       <a href="https://github.com/Pranav24PW-25">
         <img src="https://avatars.githubusercontent.com/u/200570293?v=4" width="100px;" alt="Pranav"/>
         <br />
-        <sub><b>Pranav</b></sub>
+        <sub><b>Pranav P K</b></sub>
       </a>
     </td>
   </tr>
